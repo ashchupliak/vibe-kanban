@@ -31,6 +31,26 @@ const getPathBaseName = (value: string) => {
   return parts[parts.length - 1] ?? value;
 };
 
+const normalizePath = (value: string) =>
+  value.replace(/[\\/]+/g, '/').replace(/\/+$/, '');
+
+const getRelativePath = (basePath: string, fullPath: string) => {
+  const baseNormalized = normalizePath(basePath);
+  const fullNormalized = normalizePath(fullPath);
+  const baseLower = baseNormalized.toLowerCase();
+  const fullLower = fullNormalized.toLowerCase();
+
+  if (fullLower === baseLower) {
+    return '';
+  }
+
+  if (fullLower.startsWith(`${baseLower}/`)) {
+    return fullNormalized.slice(baseNormalized.length + 1);
+  }
+
+  return '';
+};
+
 const ProjectFormDialogImpl = NiceModal.create<ProjectFormDialogProps>(() => {
   const { t } = useTranslation('projects');
   const modal = useModal();
@@ -108,16 +128,40 @@ const ProjectFormDialogImpl = NiceModal.create<ProjectFormDialogProps>(() => {
       }
 
       const projectName = getPathBaseName(selectedPath);
-      const repositories = [...repos]
-        .sort((a, b) => {
-          const aName = a.name || getPathBaseName(a.path);
-          const bName = b.name || getPathBaseName(b.path);
-          return aName.localeCompare(bName);
+      const dedupedRepos = [];
+      const seenPaths = new Set<string>();
+
+      for (const repo of repos) {
+        const normalizedPath = normalizePath(repo.path);
+        if (seenPaths.has(normalizedPath)) {
+          continue;
+        }
+        seenPaths.add(normalizedPath);
+        dedupedRepos.push({
+          path: repo.path,
+          baseName: repo.name || getPathBaseName(repo.path),
+          relativeName: getRelativePath(selectedPath, repo.path),
+        });
+      }
+
+      const baseNameCounts = dedupedRepos.reduce((acc, repo) => {
+        acc.set(repo.baseName, (acc.get(repo.baseName) ?? 0) + 1);
+        return acc;
+      }, new Map<string, number>());
+
+      const repositories = dedupedRepos
+        .map((repo) => {
+          const needsDisambiguation = (baseNameCounts.get(repo.baseName) ?? 0) > 1;
+          const displayName =
+            needsDisambiguation && repo.relativeName
+              ? repo.relativeName
+              : repo.baseName;
+          return {
+            display_name: displayName,
+            git_repo_path: repo.path,
+          };
         })
-        .map((repo) => ({
-          display_name: repo.name || getPathBaseName(repo.path),
-          git_repo_path: repo.path,
-        }));
+        .sort((a, b) => a.display_name.localeCompare(b.display_name));
 
       createProjectMutate({
         name: projectName || t('createDialog.defaultName'),
