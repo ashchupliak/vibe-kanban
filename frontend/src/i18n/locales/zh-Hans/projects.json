@@ -2,6 +2,32 @@
   "title": "项目",
   "subtitle": "管理您的项目并跟踪其进度",
   "createProject": "创建项目",
+  "createDialog": {
+    "title": "创建项目",
+    "description": "选择如何设置您的项目。",
+    "creatingTitle": "正在创建项目",
+    "creatingDescription": "正在设置您的项目...",
+    "defaultName": "新项目",
+    "options": {
+      "singleRepo": "单个仓库",
+      "singleRepoDescription": "从一个 git 仓库创建项目。",
+      "folder": "包含多个仓库的文件夹",
+      "folderDescription": "扫描文件夹并包含其中的所有 git 仓库。"
+    },
+    "repoPicker": {
+      "title": "创建项目",
+      "description": "选择或创建一个用于项目的仓库"
+    },
+    "folderPicker": {
+      "title": "选择文件夹",
+      "description": "选择包含 git 仓库的文件夹"
+    },
+    "errors": {
+      "createFailed": "创建项目失败。",
+      "noRepos": "该文件夹中未找到 git 仓库。",
+      "scanFailed": "扫描文件夹中的仓库失败。"
+    }
+  },
   "linkToOrganization": "链接到远程项目",
   "loading": "加载项目中...",
   "repoSearch": {

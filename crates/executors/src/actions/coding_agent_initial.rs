@@ -10,7 +10,9 @@ use crate::{
     actions::Executable,
     approvals::ExecutorApprovalService,
     env::ExecutionEnv,
-    executors::{BaseCodingAgent, ExecutorError, SpawnedChild, StandardCodingAgentExecutor},
+    executors::{
+        BaseCodingAgent, CodingAgent, ExecutorError, SpawnedChild, StandardCodingAgentExecutor,
+    },
     profile::ExecutorProfileId,
 };
 
@@ -21,6 +23,9 @@ pub struct CodingAgentInitialRequest {
     #[serde(alias = "profile_variant_label")]
     // Backwards compatability with ProfileVariantIds, esp stored in DB under ExecutorAction
     pub executor_profile_id: ExecutorProfileId,
+    /// Optional model override for this attempt.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model_override: Option<String>,
     /// Optional relative path to execute the agent in (relative to container_ref).
     /// If None, uses the container_ref directory directly.
     #[serde(default)]
@@ -66,6 +71,13 @@ impl Executable for CodingAgentInitialRequest {
                 .ok_or(ExecutorError::UnknownExecutorType(
                     executor_profile_id.to_string(),
                 ))?;
+
+            if let Some(model) = self.model_override.as_ref() {
+                if let CodingAgent::Jbai(mut jbai) = agent {
+                    jbai.model = Some(model.clone());
+                    agent = CodingAgent::Jbai(jbai);
+                }
+            }
 
             agent.use_approvals(approvals.clone());
 

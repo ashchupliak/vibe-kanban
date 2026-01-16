@@ -571,6 +571,12 @@
       "done": "完成",
       "cancelled": "已取消"
     },
+    "jbaiModel": {
+      "label": "JB AI Model",
+      "placeholder": "Select model",
+      "defaultOption": "Use profile default",
+      "helper": "Applies to this attempt only."
+    },
     "startLabel": "開始",
     "attachImage": "附加圖片",
     "dropImagesHere": "將圖片放在這裡",

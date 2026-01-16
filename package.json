@@ -1,9 +1,16 @@
 {
-  "name": "vibe-kanban",
+  "name": "jbai-vibe-kanban",
   "version": "0.0.153",
   "private": true,
+  "license": "Apache-2.0",
+  "description": "JB AI-enhanced Vibe Kanban",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ashchupliak/vibe-kanban.git"
+  },
   "bin": {
-    "vibe-kanban": "npx-cli/bin/cli.js"
+    "vibe-kanban": "npx-cli/bin/cli.js",
+    "jbai-vibe-kanban": "npx-cli/bin/cli.js"
   },
   "files": [
     "npx-cli/bin/cli.js",

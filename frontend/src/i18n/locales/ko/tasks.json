@@ -571,6 +571,12 @@
       "done": "완료",
       "cancelled": "취소됨"
     },
+    "jbaiModel": {
+      "label": "JB AI Model",
+      "placeholder": "Select model",
+      "defaultOption": "Use profile default",
+      "helper": "Applies to this attempt only."
+    },
     "startLabel": "시작",
     "attachImage": "이미지 첨부",
     "dropImagesHere": "여기에 이미지를 드롭하세요",

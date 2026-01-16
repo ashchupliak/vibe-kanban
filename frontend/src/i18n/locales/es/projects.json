@@ -2,6 +2,32 @@
   "title": "Proyectos",
   "subtitle": "Gestiona tus proyectos y sigue su progreso",
   "createProject": "Crear Proyecto",
+  "createDialog": {
+    "title": "Crear proyecto",
+    "description": "Elige cómo quieres configurar tu proyecto.",
+    "creatingTitle": "Creando proyecto",
+    "creatingDescription": "Configurando tu proyecto...",
+    "defaultName": "Nuevo proyecto",
+    "options": {
+      "singleRepo": "Repositorio único",
+      "singleRepoDescription": "Crea un proyecto a partir de un repositorio git.",
+      "folder": "Carpeta con repositorios",
+      "folderDescription": "Escanea una carpeta e incluye todos los repositorios git dentro."
+    },
+    "repoPicker": {
+      "title": "Crear proyecto",
+      "description": "Selecciona o crea un repositorio para tu proyecto"
+    },
+    "folderPicker": {
+      "title": "Seleccionar carpeta",
+      "description": "Elige una carpeta que contenga repositorios git"
+    },
+    "errors": {
+      "createFailed": "No se pudo crear el proyecto.",
+      "noRepos": "No se encontraron repositorios git en esa carpeta.",
+      "scanFailed": "No se pudo escanear la carpeta para repositorios."
+    }
+  },
   "linkToOrganization": "Vincular a Proyecto Remoto",
   "loading": "Cargando proyectos...",
   "repoSearch": {

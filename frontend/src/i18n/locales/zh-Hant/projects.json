@@ -2,6 +2,32 @@
   "title": "專案",
   "subtitle": "管理您的專案並追蹤進度",
   "createProject": "建立專案",
+  "createDialog": {
+    "title": "建立專案",
+    "description": "選擇如何設定您的專案。",
+    "creatingTitle": "正在建立專案",
+    "creatingDescription": "正在設定您的專案...",
+    "defaultName": "新專案",
+    "options": {
+      "singleRepo": "單一儲存庫",
+      "singleRepoDescription": "從一個 git 儲存庫建立專案。",
+      "folder": "包含多個儲存庫的資料夾",
+      "folderDescription": "掃描資料夾並包含其中的所有 git 儲存庫。"
+    },
+    "repoPicker": {
+      "title": "建立專案",
+      "description": "選擇或建立用於專案的儲存庫"
+    },
+    "folderPicker": {
+      "title": "選擇資料夾",
+      "description": "選擇包含 git 儲存庫的資料夾"
+    },
+    "errors": {
+      "createFailed": "建立專案失敗。",
+      "noRepos": "該資料夾中未找到 git 儲存庫。",
+      "scanFailed": "掃描資料夾中的儲存庫失敗。"
+    }
+  },
   "linkToOrganization": "連結到遠端專案",
   "loading": "載入專案中...",
   "repoSearch": {

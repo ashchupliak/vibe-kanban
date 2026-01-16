@@ -259,6 +259,15 @@
         "notFound": "不明",
         "notFoundTooltip": "このエージェントが設定されているか確認できませんでしたが、試してみてください。"
       },
+      "jbai": {
+        "title": "JB AI Token",
+        "description": "Store a JB AI token for jbai-cli runs.",
+        "token": {
+          "label": "JBAI Token",
+          "placeholder": "Paste your JB AI token",
+          "helper": "Saved locally and injected as JBAI_TOKEN for jbai-cli."
+        }
+      },
       "editor": {
         "formLabel": "JSONを編集",
         "agentLabel": "エージェント",

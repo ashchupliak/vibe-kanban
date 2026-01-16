@@ -255,6 +255,31 @@ impl StandardCodingAgentExecutor for Codex {
 }
 
 impl Codex {
+    pub fn new_with_overrides(
+        append_prompt: AppendPrompt,
+        model: Option<String>,
+        cmd: CmdOverrides,
+    ) -> Self {
+        Self {
+            append_prompt,
+            sandbox: None,
+            ask_for_approval: None,
+            oss: None,
+            model,
+            model_reasoning_effort: None,
+            model_reasoning_summary: None,
+            model_reasoning_summary_format: None,
+            profile: None,
+            base_instructions: None,
+            include_apply_patch_tool: None,
+            model_provider: None,
+            compact_prompt: None,
+            developer_instructions: None,
+            cmd,
+            approvals: None,
+        }
+    }
+
     pub fn base_command() -> &'static str {
         "npx -y @openai/codex@0.77.0"
     }

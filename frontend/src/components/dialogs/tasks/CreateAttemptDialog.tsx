@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import RepoBranchSelector from '@/components/tasks/RepoBranchSelector';
 import { ExecutorProfileSelector } from '@/components/settings';
 import { useAttemptCreation } from '@/hooks/useAttemptCreation';
@@ -22,10 +31,13 @@ import {
 import { useTaskAttemptsWithSessions } from '@/hooks/useTaskAttempts';
 import { useProject } from '@/contexts/ProjectContext';
 import { useUserSystem } from '@/components/ConfigProvider';
+import { configApi } from '@/lib/api';
 import { paths } from '@/lib/paths';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
-import type { ExecutorProfileId, BaseCodingAgent } from 'shared/types';
+import { BaseCodingAgent } from 'shared/types';
+import type { ExecutorProfileId } from 'shared/types';
+import { getJbaiModelOptions } from '@/utils/jbai-models';
 import { useKeySubmitTask, Scope } from '@/keyboard';
 
 export interface CreateAttemptDialogProps {
@@ -50,6 +62,9 @@ const CreateAttemptDialogImpl = NiceModal.create<CreateAttemptDialogProps>(
 
     const [userSelectedProfile, setUserSelectedProfile] =
       useState<ExecutorProfileId | null>(null);
+    const [jbaiModelOverride, setJbaiModelOverride] = useState<string | null>(
+      null
+    );
 
     const { data: attempts = [], isLoading: isLoadingAttempts } =
       useTaskAttemptsWithSessions(taskId, {
@@ -94,6 +109,7 @@ const CreateAttemptDialogImpl = NiceModal.create<CreateAttemptDialogProps>(
     useEffect(() => {
       if (!modal.visible) {
         setUserSelectedProfile(null);
+        setJbaiModelOverride(null);
         resetBranchSelection();
       }
     }, [modal.visible, resetBranchSelection]);
@@ -119,6 +135,59 @@ const CreateAttemptDialogImpl = NiceModal.create<CreateAttemptDialogProps>(
     }, [latestAttempt?.session?.executor, config?.executor_profile]);
 
     const effectiveProfile = userSelectedProfile ?? defaultProfile;
+    const isJbaiSelected =
+      effectiveProfile?.executor === BaseCodingAgent.JBAI;
+
+    const jbaiClient = useMemo(() => {
+      if (!isJbaiSelected || !profiles || !effectiveProfile) {
+        return 'CLAUDE';
+      }
+      const variant = effectiveProfile.variant ?? 'DEFAULT';
+      const executorConfigs = profiles[effectiveProfile.executor];
+      const variantConfig =
+        executorConfigs?.[variant] as Record<string, unknown> | undefined;
+      const jbaiConfig = variantConfig?.JBAI as { client?: string } | undefined;
+      return jbaiConfig?.client ?? 'CLAUDE';
+    }, [isJbaiSelected, profiles, effectiveProfile]);
+
+    const { data: jbaiModels } = useQuery({
+      queryKey: ['jbai-models'],
+      queryFn: configApi.getJbaiModels,
+      staleTime: 5 * 60 * 1000,
+      enabled: modal.visible && isJbaiSelected,
+    });
+
+    const jbaiModelOptions = useMemo(() => {
+      if (!isJbaiSelected) {
+        return [];
+      }
+      const dynamicOptions: Record<string, string[]> | null = jbaiModels
+        ? {
+            CLAUDE: jbaiModels.claude.available,
+            CODEX: jbaiModels.codex.available,
+            GEMINI: jbaiModels.gemini.available,
+            OPENCODE: jbaiModels.opencode.available,
+          }
+        : null;
+      return dynamicOptions?.[jbaiClient] ?? getJbaiModelOptions(jbaiClient);
+    }, [isJbaiSelected, jbaiClient, jbaiModels]);
+
+    useEffect(() => {
+      if (!isJbaiSelected) {
+        if (jbaiModelOverride) {
+          setJbaiModelOverride(null);
+        }
+        return;
+      }
+
+      if (
+        jbaiModelOverride &&
+        jbaiModelOptions.length > 0 &&
+        !jbaiModelOptions.includes(jbaiModelOverride)
+      ) {
+        setJbaiModelOverride(null);
+      }
+    }, [isJbaiSelected, jbaiModelOverride, jbaiModelOptions]);
 
     const isLoadingInitial =
       isLoadingRepos ||
@@ -152,6 +221,7 @@ const CreateAttemptDialogImpl = NiceModal.create<CreateAttemptDialogProps>(
         await createAttempt({
           profile: effectiveProfile,
           repos,
+          modelOverride: jbaiModelOverride,
         });
 
         modal.hide();
@@ -198,6 +268,42 @@ const CreateAttemptDialogImpl = NiceModal.create<CreateAttemptDialogProps>(
               isLoading={isLoadingBranches}
               className="space-y-2"
             />
+
+            {isJbaiSelected && (
+              <div className="space-y-2">
+                <Label htmlFor="jbai-model">
+                  {t('taskFormDialog.jbaiModel.label')}
+                </Label>
+                <Select
+                  value={jbaiModelOverride ?? '__default__'}
+                  onValueChange={(value) =>
+                    setJbaiModelOverride(
+                      value === '__default__' ? null : value
+                    )
+                  }
+                  disabled={isCreating || isLoadingInitial}
+                >
+                  <SelectTrigger id="jbai-model">
+                    <SelectValue
+                      placeholder={t('taskFormDialog.jbaiModel.placeholder')}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__default__">
+                      {t('taskFormDialog.jbaiModel.defaultOption')}
+                    </SelectItem>
+                    {jbaiModelOptions.map((model) => (
+                      <SelectItem key={model} value={model}>
+                        {model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {t('taskFormDialog.jbaiModel.helper')}
+                </p>
+              </div>
+            )}
 
             {error && (
               <div className="text-sm text-destructive">

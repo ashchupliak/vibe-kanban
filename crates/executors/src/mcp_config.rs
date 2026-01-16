@@ -299,6 +299,12 @@ impl CodingAgent {
             CodingAgent::Codex(_) => Codex,
             CodingAgent::Opencode(_) => Opencode,
             CodingAgent::Copilot(..) => Copilot,
+            CodingAgent::Jbai(agent) => match agent.client {
+                crate::executors::jbai::JbaiClient::Claude => Passthrough,
+                crate::executors::jbai::JbaiClient::Codex => Codex,
+                crate::executors::jbai::JbaiClient::Gemini => Gemini,
+                crate::executors::jbai::JbaiClient::Opencode => Opencode,
+            },
             #[cfg(feature = "qa-mode")]
             CodingAgent::QaMock(_) => Passthrough, // QA mock doesn't need MCP
         };

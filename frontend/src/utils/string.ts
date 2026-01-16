@@ -4,6 +4,12 @@
  * @returns Formatted string with proper capitalization
  */
 export const toPrettyCase = (value: string): string => {
+  const overrides: Record<string, string> = {
+    JBAI: 'JB AI',
+  };
+  if (overrides[value]) {
+    return overrides[value];
+  }
   return value
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())

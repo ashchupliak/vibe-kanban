@@ -152,6 +152,7 @@ pub struct CreateTaskAttemptBody {
     pub task_id: Uuid,
     pub executor_profile_id: ExecutorProfileId,
     pub repos: Vec<WorkspaceRepoInput>,
+    pub model_override: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ts_rs::TS)]
@@ -227,7 +228,11 @@ pub async fn create_task_attempt(
     WorkspaceRepo::create_many(pool, workspace.id, &workspace_repos).await?;
     if let Err(err) = deployment
         .container()
-        .start_workspace(&workspace, executor_profile_id.clone())
+        .start_workspace(
+            &workspace,
+            executor_profile_id.clone(),
+            payload.model_override.clone(),
+        )
         .await
     {
         tracing::error!("Failed to start task attempt: {}", err);
@@ -266,6 +271,13 @@ pub async fn run_agent_setup(
         }
         CodingAgent::Codex(codex) => {
             codex_setup::run_codex_setup(&deployment, &workspace, &codex).await?;
+        }
+        CodingAgent::Jbai(agent) => {
+            if let Some(codex) = agent.codex_config() {
+                codex_setup::run_codex_setup(&deployment, &workspace, &codex).await?;
+            } else {
+                return Err(ApiError::Executor(ExecutorError::SetupHelperNotSupported));
+            }
         }
         _ => return Err(ApiError::Executor(ExecutorError::SetupHelperNotSupported)),
     }

@@ -259,6 +259,15 @@
         "notFound": "未知",
         "notFoundTooltip": "我们无法验证此代理是否已设置，但请继续尝试。"
       },
+      "jbai": {
+        "title": "JB AI Token",
+        "description": "Store a JB AI token for jbai-cli runs.",
+        "token": {
+          "label": "JBAI Token",
+          "placeholder": "Paste your JB AI token",
+          "helper": "Saved locally and injected as JBAI_TOKEN for jbai-cli."
+        }
+      },
       "editor": {
         "formLabel": "编辑 JSON",
         "agentLabel": "代理",

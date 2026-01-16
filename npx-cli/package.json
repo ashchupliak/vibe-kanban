@@ -1,17 +1,23 @@
 {
-  "name": "vibe-kanban",
+  "name": "jbai-vibe-kanban",
   "private": false,
   "version": "0.0.153",
   "main": "index.js",
   "bin": {
-    "vibe-kanban": "bin/cli.js"
+    "vibe-kanban": "bin/cli.js",
+    "jbai-vibe-kanban": "bin/cli.js"
   },
   "keywords": [],
   "author": "bloop",
-  "license": "",
-  "description": "NPX wrapper around vibe-kanban and vibe-kanban-mcp",
+  "license": "Apache-2.0",
+  "description": "JB AI-enhanced Vibe Kanban CLI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ashchupliak/vibe-kanban.git"
+  },
   "dependencies": {
-    "adm-zip": "^0.5.16"
+    "adm-zip": "^0.5.16",
+    "jbai-cli": "^1.5.0"
   },
   "files": [
     "bin",

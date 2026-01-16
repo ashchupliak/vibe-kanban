@@ -10,6 +10,7 @@ import type {
 type CreateAttemptArgs = {
   profile: ExecutorProfileId;
   repos: WorkspaceRepoInput[];
+  modelOverride?: string | null;
 };
 
 type UseAttemptCreationArgs = {
@@ -24,11 +25,12 @@ export function useAttemptCreation({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({ profile, repos }: CreateAttemptArgs) =>
+    mutationFn: ({ profile, repos, modelOverride }: CreateAttemptArgs) =>
       attemptsApi.create({
         task_id: taskId,
         executor_profile_id: profile,
         repos,
+        model_override: modelOverride ?? null,
       }),
     onSuccess: (newAttempt: Workspace) => {
       queryClient.setQueryData(

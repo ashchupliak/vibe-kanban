@@ -105,6 +105,28 @@
         }
       }
     },
+    "JBAI": {
+      "DEFAULT": {
+        "JBAI": {
+          "client": "CLAUDE"
+        }
+      },
+      "CODEX": {
+        "JBAI": {
+          "client": "CODEX"
+        }
+      },
+      "GEMINI": {
+        "JBAI": {
+          "client": "GEMINI"
+        }
+      },
+      "OPENCODE": {
+        "JBAI": {
+          "client": "OPENCODE"
+        }
+      }
+    },
     "QWEN_CODE": {
       "DEFAULT": {
         "QWEN_CODE": {

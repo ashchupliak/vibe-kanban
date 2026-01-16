@@ -74,6 +74,7 @@ export function NoServerContent({
       },
       executor_profile_id: config.executor_profile,
       repos,
+      model_override: null,
     });
   };
 

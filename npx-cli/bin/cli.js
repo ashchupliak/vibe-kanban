@@ -46,6 +46,24 @@ function getEffectiveArch() {
 const platform = process.platform;
 const arch = getEffectiveArch();
 
+function configureJbaiEnvironment() {
+  const packageRoot = path.resolve(__dirname, "..");
+  const binDir = path.join(packageRoot, "node_modules", ".bin");
+  if (fs.existsSync(binDir)) {
+    process.env.PATH = [binDir, process.env.PATH || ""].join(path.delimiter);
+  }
+
+  try {
+    const jbaiPackage = require.resolve("jbai-cli/package.json", {
+      paths: [packageRoot],
+    });
+    const jbaiRoot = path.dirname(jbaiPackage);
+    process.env.JBAI_CLI_ROOT = jbaiRoot;
+  } catch {
+    // jbai-cli is optional; fall back to PATH if not installed
+  }
+}
+
 // Map to our build target names
 function getPlatformDir() {
   if (platform === "linux" && arch === "x64") return "linux-x64";
@@ -143,6 +161,7 @@ async function extractAndRun(baseName, launch) {
 
 async function main() {
   fs.mkdirSync(versionCacheDir, { recursive: true });
+  configureJbaiEnvironment();
 
   const args = process.argv.slice(2);
   const isMcpMode = args.includes("--mcp");

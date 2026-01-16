@@ -76,6 +76,24 @@ pub struct ClaudeCode {
 }
 
 impl ClaudeCode {
+    pub fn new_with_overrides(
+        append_prompt: AppendPrompt,
+        model: Option<String>,
+        cmd: CmdOverrides,
+    ) -> Self {
+        Self {
+            append_prompt,
+            claude_code_router: None,
+            plan: None,
+            approvals: None,
+            model,
+            dangerously_skip_permissions: None,
+            disable_api_key: None,
+            cmd,
+            approvals_service: None,
+        }
+    }
+
     async fn build_command_builder(&self) -> Result<CommandBuilder, CommandBuildError> {
         // If base_command_override is provided and claude_code_router is also set, log a warning
         if self.cmd.base_command_override.is_some() && self.claude_code_router.is_some() {

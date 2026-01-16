@@ -2,6 +2,32 @@
   "title": "プロジェクト",
   "subtitle": "プロジェクトを管理し、進捗を追跡します",
   "createProject": "プロジェクトを作成",
+  "createDialog": {
+    "title": "プロジェクトを作成",
+    "description": "プロジェクトの作成方法を選択してください。",
+    "creatingTitle": "プロジェクトを作成中",
+    "creatingDescription": "プロジェクトを設定しています...",
+    "defaultName": "新しいプロジェクト",
+    "options": {
+      "singleRepo": "単一リポジトリ",
+      "singleRepoDescription": "1つのgitリポジトリからプロジェクトを作成します。",
+      "folder": "リポジトリを含むフォルダー",
+      "folderDescription": "フォルダーをスキャンして含まれるgitリポジトリを追加します。"
+    },
+    "repoPicker": {
+      "title": "プロジェクトを作成",
+      "description": "プロジェクト用のリポジトリを選択または作成"
+    },
+    "folderPicker": {
+      "title": "フォルダーを選択",
+      "description": "gitリポジトリを含むフォルダーを選択"
+    },
+    "errors": {
+      "createFailed": "プロジェクトの作成に失敗しました。",
+      "noRepos": "そのフォルダーにgitリポジトリが見つかりません。",
+      "scanFailed": "フォルダーのリポジトリをスキャンできませんでした。"
+    }
+  },
   "linkToOrganization": "リモートプロジェクトにリンク",
   "loading": "プロジェクトを読み込み中...",
   "repoSearch": {

@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { JSONEditor } from '@/components/ui/json-editor';
@@ -81,6 +82,13 @@ export function AgentSettings() {
   const [executorSuccess, setExecutorSuccess] = useState(false);
   const [executorError, setExecutorError] = useState<string | null>(null);
 
+  const [jbaiTokenDraft, setJbaiTokenDraft] = useState<string>(
+    () => config?.jbai_token ?? ''
+  );
+  const [jbaiTokenSaving, setJbaiTokenSaving] = useState(false);
+  const [jbaiTokenSuccess, setJbaiTokenSuccess] = useState(false);
+  const [jbaiTokenError, setJbaiTokenError] = useState<string | null>(null);
+
   // Check agent availability when draft executor changes
   const agentAvailability = useAgentAvailability(executorDraft?.executor);
 
@@ -118,6 +126,15 @@ export function AgentSettings() {
     }
   }, [config?.executor_profile]);
 
+  const jbaiTokenDirty =
+    (config?.jbai_token ?? '') !== jbaiTokenDraft;
+
+  useEffect(() => {
+    if (!jbaiTokenDirty) {
+      setJbaiTokenDraft(config?.jbai_token ?? '');
+    }
+  }, [config?.jbai_token, jbaiTokenDirty]);
+
   // Update executor draft
   const updateExecutorDraft = (newProfile: ExecutorProfileId) => {
     setExecutorDraft(newProfile);
@@ -140,6 +157,28 @@ export function AgentSettings() {
       console.error('Error saving executor profile:', err);
     } finally {
       setExecutorSaving(false);
+    }
+  };
+
+  const handleSaveJbaiToken = async () => {
+    if (!config) return;
+
+    setJbaiTokenSaving(true);
+    setJbaiTokenError(null);
+
+    try {
+      const trimmed = jbaiTokenDraft.trim();
+      await updateAndSaveConfig({
+        jbai_token: trimmed ? trimmed : null,
+      });
+      setJbaiTokenSuccess(true);
+      setTimeout(() => setJbaiTokenSuccess(false), 3000);
+      reloadSystem();
+    } catch (err) {
+      setJbaiTokenError(t('settings.general.save.error'));
+      console.error('Error saving JBAI token:', err);
+    } finally {
+      setJbaiTokenSaving(false);
     }
   };
 
@@ -465,6 +504,20 @@ export function AgentSettings() {
         </Alert>
       )}
 
+      {jbaiTokenError && (
+        <Alert variant="destructive">
+          <AlertDescription>{jbaiTokenError}</AlertDescription>
+        </Alert>
+      )}
+
+      {jbaiTokenSuccess && (
+        <Alert variant="success">
+          <AlertDescription className="font-medium">
+            {t('settings.general.save.success')}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>{t('settings.general.taskExecution.title')}</CardTitle>
@@ -590,6 +643,44 @@ export function AgentSettings() {
               disabled={!executorDirty || executorSaving}
             >
               {executorSaving && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {t('common:buttons.save')}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.agents.jbai.title')}</CardTitle>
+          <CardDescription>
+            {t('settings.agents.jbai.description')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="jbai-token">
+              {t('settings.agents.jbai.token.label')}
+            </Label>
+            <Input
+              id="jbai-token"
+              type="password"
+              value={jbaiTokenDraft}
+              onChange={(event) => setJbaiTokenDraft(event.target.value)}
+              placeholder={t('settings.agents.jbai.token.placeholder')}
+              autoComplete="new-password"
+            />
+            <p className="text-sm text-muted-foreground">
+              {t('settings.agents.jbai.token.helper')}
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSaveJbaiToken}
+              disabled={!jbaiTokenDirty || jbaiTokenSaving}
+            >
+              {jbaiTokenSaving && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               {t('common:buttons.save')}

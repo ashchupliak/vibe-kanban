@@ -571,6 +571,12 @@
       "done": "Completado",
       "cancelled": "Cancelado"
     },
+    "jbaiModel": {
+      "label": "JB AI Model",
+      "placeholder": "Select model",
+      "defaultOption": "Use profile default",
+      "helper": "Applies to this attempt only."
+    },
     "startLabel": "Iniciar",
     "attachImage": "Adjuntar imagen",
     "dropImagesHere": "Suelta las imágenes aquí",

@@ -259,6 +259,15 @@
         "notFound": "Unknown",
         "notFoundTooltip": "We couldn't verify this agent is set up, but go ahead and try it."
       },
+      "jbai": {
+        "title": "JB AI Token",
+        "description": "Store a JB AI token for jbai-cli runs.",
+        "token": {
+          "label": "JBAI Token",
+          "placeholder": "Paste your JB AI token",
+          "helper": "Saved locally and injected as JBAI_TOKEN for jbai-cli."
+        }
+      },
       "editor": {
         "formLabel": "Edit JSON",
         "agentLabel": "Agent",

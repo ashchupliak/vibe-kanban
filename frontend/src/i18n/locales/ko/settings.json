@@ -259,6 +259,15 @@
         "notFound": "알 수 없음",
         "notFoundTooltip": "이 에이전트가 설정되어 있는지 확인할 수 없지만, 시도해 보세요."
       },
+      "jbai": {
+        "title": "JB AI Token",
+        "description": "Store a JB AI token for jbai-cli runs.",
+        "token": {
+          "label": "JBAI Token",
+          "placeholder": "Paste your JB AI token",
+          "helper": "Saved locally and injected as JBAI_TOKEN for jbai-cli."
+        }
+      },
       "editor": {
         "formLabel": "JSON 편집",
         "agentLabel": "에이전트",

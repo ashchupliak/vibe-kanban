@@ -46,6 +46,7 @@ import {
   RenameBranchRequest,
   RenameBranchResponse,
   CheckEditorAvailabilityResponse,
+  JbaiModelsResponse,
   AvailabilityInfo,
   BaseCodingAgent,
   RunAgentSetupRequest,
@@ -958,6 +959,10 @@ export const configApi = {
       `/api/agents/check-availability?executor=${encodeURIComponent(agent)}`
     );
     return handleApiResponse<AvailabilityInfo>(response);
+  },
+  getJbaiModels: async (): Promise<JbaiModelsResponse> => {
+    const response = await makeRequest('/api/jbai/models');
+    return handleApiResponse<JbaiModelsResponse>(response);
   },
 };
 

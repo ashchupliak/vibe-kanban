@@ -875,6 +875,7 @@ pub trait ContainerService {
         &self,
         workspace: &Workspace,
         executor_profile_id: ExecutorProfileId,
+        model_override: Option<String>,
     ) -> Result<ExecutionProcess, ContainerError> {
         // Create container
         self.create(workspace).await?;
@@ -920,6 +921,7 @@ pub trait ContainerService {
             ExecutorActionType::CodingAgentInitialRequest(CodingAgentInitialRequest {
                 prompt,
                 executor_profile_id: executor_profile_id.clone(),
+                model_override,
                 working_dir,
             }),
             cleanup_action.map(Box::new),

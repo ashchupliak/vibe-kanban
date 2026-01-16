@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Form from '@rjsf/core';
 import type { IChangeEvent } from '@rjsf/core';
 import { RJSFValidationError } from '@rjsf/utils';
@@ -10,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { shadcnTheme } from './rjsf';
 import { BaseCodingAgent } from 'shared/types';
+import { getJbaiModelOptions } from '@/utils/jbai-models';
+import { configApi } from '@/lib/api';
 // Using custom shadcn/ui widgets instead of @rjsf/shadcn theme
 
 interface ExecutorConfigFormProps {
@@ -44,6 +47,13 @@ export function ExecutorConfigForm({
     return schemas[executor];
   }, [executor]);
 
+  const { data: jbaiModels } = useQuery({
+    queryKey: ['jbai-models'],
+    queryFn: configApi.getJbaiModels,
+    staleTime: 5 * 60 * 1000,
+    enabled: executor === BaseCodingAgent.JBAI,
+  });
+
   // Custom handler for env field updates
   const handleEnvChange = useCallback(
     (envData: Record<string, string> | undefined) => {
@@ -59,14 +69,45 @@ export function ExecutorConfigForm({
     [formData, onChange]
   );
 
-  const uiSchema = useMemo(
-    () => ({
+  const jbaiModelOptions = useMemo(() => {
+    if (executor !== BaseCodingAgent.JBAI) {
+      return [];
+    }
+    const client =
+      (formData as { client?: string } | null)?.client ?? 'CLAUDE';
+    const dynamicOptions: Record<string, string[]> | null = jbaiModels
+      ? {
+          CLAUDE: jbaiModels.claude.available,
+          CODEX: jbaiModels.codex.available,
+          GEMINI: jbaiModels.gemini.available,
+          OPENCODE: jbaiModels.opencode.available,
+        }
+      : null;
+    const fallbackOptions = getJbaiModelOptions(client);
+    return dynamicOptions?.[client] ?? fallbackOptions;
+  }, [executor, formData, jbaiModels]);
+
+  const uiSchema = useMemo(() => {
+    const base: Record<string, unknown> = {
       env: {
         'ui:field': 'KeyValueField',
       },
-    }),
-    []
-  );
+    };
+
+    if (executor === BaseCodingAgent.JBAI) {
+      base.model = {
+        'ui:widget': 'select',
+        'ui:options': {
+          enumOptions: jbaiModelOptions.map((model) => ({
+            label: model,
+            value: model,
+          })),
+        },
+      };
+    }
+
+    return base;
+  }, [executor, jbaiModelOptions]);
 
   // Pass the env update handler via formContext
   const formContext = useMemo(
@@ -80,6 +121,26 @@ export function ExecutorConfigForm({
     setFormData(value || {});
     setValidationErrors([]);
   }, [value, executor]);
+
+  useEffect(() => {
+    if (executor !== BaseCodingAgent.JBAI) {
+      return;
+    }
+    const data = formData as { model?: string | null } | null;
+    if (!data?.model) {
+      return;
+    }
+    if (jbaiModelOptions.length > 0 && !jbaiModelOptions.includes(data.model)) {
+      const next = {
+        ...(formData as Record<string, unknown>),
+        model: null,
+      };
+      setFormData(next);
+      if (onChange) {
+        onChange(next);
+      }
+    }
+  }, [executor, formData, jbaiModelOptions, onChange]);
 
   const handleChange = (event: IChangeEvent<unknown>) => {
     const newFormData = event.formData;

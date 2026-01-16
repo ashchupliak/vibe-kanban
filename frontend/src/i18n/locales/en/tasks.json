@@ -638,6 +638,12 @@
       "done": "Done",
       "cancelled": "Cancelled"
     },
+    "jbaiModel": {
+      "label": "JB AI Model",
+      "placeholder": "Select model",
+      "defaultOption": "Use profile default",
+      "helper": "Applies to this attempt only."
+    },
     "startLabel": "Start",
     "attachImage": "Attach image",
     "dropImagesHere": "Drop images here",

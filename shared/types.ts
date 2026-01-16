@@ -218,6 +218,10 @@ export type CheckEditorAvailabilityResponse = { available: boolean, };
 
 export type CheckAgentAvailabilityQuery = { executor: BaseCodingAgent, };
 
+export type JbaiClientModels = { available: Array<string>, default: string | null, };
+
+export type JbaiModelsResponse = { claude: JbaiClientModels, codex: JbaiClientModels, gemini: JbaiClientModels, opencode: JbaiClientModels, };
+
 export type CurrentUserResponse = { user_id: string, };
 
 export type CreateFollowUpAttempt = { prompt: string, variant: string | null, retry_process_id: string | null, force_when_dirty: boolean | null, perform_git_reset: boolean | null, };
@@ -246,7 +250,7 @@ export type AssignSharedTaskRequest = { new_assignee_user_id: string | null, };
 
 export type ShareTaskResponse = { shared_task_id: string, };
 
-export type CreateAndStartTaskRequest = { task: CreateTask, executor_profile_id: ExecutorProfileId, repos: Array<WorkspaceRepoInput>, };
+export type CreateAndStartTaskRequest = { task: CreateTask, executor_profile_id: ExecutorProfileId, repos: Array<WorkspaceRepoInput>, model_override: string | null, };
 
 export type CreatePrApiRequest = { title: string, body: string | null, target_branch: string | null, draft: boolean | null, repo_id: string, auto_generate_description: boolean, };
 
@@ -254,7 +258,7 @@ export type ImageResponse = { id: string, file_path: string, original_name: stri
 
 export type ImageMetadata = { exists: boolean, file_name: string | null, path: string | null, size_bytes: bigint | null, format: string | null, proxy_url: string | null, };
 
-export type CreateTaskAttemptBody = { task_id: string, executor_profile_id: ExecutorProfileId, repos: Array<WorkspaceRepoInput>, };
+export type CreateTaskAttemptBody = { task_id: string, executor_profile_id: ExecutorProfileId, repos: Array<WorkspaceRepoInput>, model_override: string | null, };
 
 export type WorkspaceRepoInput = { repo_id: string, target_branch: string, };
 
@@ -374,7 +378,7 @@ export type DirectoryListResponse = { entries: Array<DirectoryEntry>, current_pa
 
 export type SearchMode = "taskform" | "settings";
 
-export type Config = { config_version: string, theme: ThemeMode, executor_profile: ExecutorProfileId, disclaimer_acknowledged: boolean, onboarding_acknowledged: boolean, notifications: NotificationConfig, editor: EditorConfig, github: GitHubConfig, analytics_enabled: boolean, workspace_dir: string | null, last_app_version: string | null, show_release_notes: boolean, language: UiLanguage, git_branch_prefix: string, showcases: ShowcaseState, pr_auto_description_enabled: boolean, pr_auto_description_prompt: string | null, beta_workspaces: boolean, beta_workspaces_invitation_sent: boolean, };
+export type Config = { config_version: string, theme: ThemeMode, executor_profile: ExecutorProfileId, disclaimer_acknowledged: boolean, onboarding_acknowledged: boolean, notifications: NotificationConfig, editor: EditorConfig, github: GitHubConfig, jbai_token?: string | null, analytics_enabled: boolean, workspace_dir: string | null, last_app_version: string | null, show_release_notes: boolean, language: UiLanguage, git_branch_prefix: string, showcases: ShowcaseState, pr_auto_description_enabled: boolean, pr_auto_description_prompt: string | null, beta_workspaces: boolean, beta_workspaces_invitation_sent: boolean, };
 
 export type NotificationConfig = { sound_enabled: boolean, push_enabled: boolean, sound_file: SoundFile, };
 
@@ -433,9 +437,9 @@ working_dir: string | null, };
 
 export type ScriptRequestLanguage = "Bash";
 
-export enum BaseCodingAgent { CLAUDE_CODE = "CLAUDE_CODE", AMP = "AMP", GEMINI = "GEMINI", CODEX = "CODEX", OPENCODE = "OPENCODE", CURSOR_AGENT = "CURSOR_AGENT", QWEN_CODE = "QWEN_CODE", COPILOT = "COPILOT", DROID = "DROID" }
+export enum BaseCodingAgent { CLAUDE_CODE = "CLAUDE_CODE", AMP = "AMP", GEMINI = "GEMINI", CODEX = "CODEX", OPENCODE = "OPENCODE", CURSOR_AGENT = "CURSOR_AGENT", QWEN_CODE = "QWEN_CODE", COPILOT = "COPILOT", DROID = "DROID", JBAI = "JBAI" }
 
-export type CodingAgent = { "CLAUDE_CODE": ClaudeCode } | { "AMP": Amp } | { "GEMINI": Gemini } | { "CODEX": Codex } | { "OPENCODE": Opencode } | { "CURSOR_AGENT": CursorAgent } | { "QWEN_CODE": QwenCode } | { "COPILOT": Copilot } | { "DROID": Droid };
+export type CodingAgent = { "CLAUDE_CODE": ClaudeCode } | { "AMP": Amp } | { "GEMINI": Gemini } | { "CODEX": Codex } | { "OPENCODE": Opencode } | { "CURSOR_AGENT": CursorAgent } | { "QWEN_CODE": QwenCode } | { "COPILOT": Copilot } | { "DROID": Droid } | { "JBAI": Jbai };
 
 export type AvailabilityInfo = { "type": "LOGIN_DETECTED", last_auth_timestamp: bigint, } | { "type": "INSTALLATION_FOUND" } | { "type": "NOT_FOUND" };
 
@@ -459,7 +463,7 @@ executor: BaseCodingAgent,
  */
 variant: string | null, };
 
-export type ExecutorConfig = { [key in string]?: { "CLAUDE_CODE": ClaudeCode } | { "AMP": Amp } | { "GEMINI": Gemini } | { "CODEX": Codex } | { "OPENCODE": Opencode } | { "CURSOR_AGENT": CursorAgent } | { "QWEN_CODE": QwenCode } | { "COPILOT": Copilot } | { "DROID": Droid } };
+export type ExecutorConfig = { [key in string]?: { "CLAUDE_CODE": ClaudeCode } | { "AMP": Amp } | { "GEMINI": Gemini } | { "CODEX": Codex } | { "OPENCODE": Opencode } | { "CURSOR_AGENT": CursorAgent } | { "QWEN_CODE": QwenCode } | { "COPILOT": Copilot } | { "DROID": Droid } | { "JBAI": Jbai } };
 
 export type ExecutorConfigs = { executors: { [key in BaseCodingAgent]?: ExecutorConfig }, };
 
@@ -501,6 +505,10 @@ export type Autonomy = "normal" | "low" | "medium" | "high" | "skip-permissions-
 
 export type DroidReasoningEffort = "none" | "dynamic" | "off" | "low" | "medium" | "high";
 
+export type Jbai = { append_prompt: AppendPrompt, client: JbaiClient, model?: string | null, base_command_override?: string | null, additional_params?: Array<string> | null, env?: { [key in string]?: string } | null, };
+
+export enum JbaiClient { CLAUDE = "CLAUDE", CODEX = "CODEX", GEMINI = "GEMINI", OPENCODE = "OPENCODE" }
+
 export type AppendPrompt = string | null;
 
 export type CodingAgentInitialRequest = { prompt: string, 
@@ -508,6 +516,10 @@ export type CodingAgentInitialRequest = { prompt: string,
  * Executor profile specification
  */
 executor_profile_id: ExecutorProfileId, 
+/**
+ * Optional model override for this attempt.
+ */
+model_override?: string | null, 
 /**
  * Optional relative path to execute the agent in (relative to container_ref).
  * If None, uses the container_ref directory directly.

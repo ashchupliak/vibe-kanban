@@ -107,6 +107,8 @@ fn generate_types_content() -> String {
         server::routes::config::CheckEditorAvailabilityQuery::decl(),
         server::routes::config::CheckEditorAvailabilityResponse::decl(),
         server::routes::config::CheckAgentAvailabilityQuery::decl(),
+        server::routes::config::JbaiClientModels::decl(),
+        server::routes::config::JbaiModelsResponse::decl(),
         server::routes::oauth::CurrentUserResponse::decl(),
         server::routes::sessions::CreateFollowUpAttempt::decl(),
         server::routes::task_attempts::ChangeTargetBranchRequest::decl(),
@@ -198,6 +200,8 @@ fn generate_types_content() -> String {
         executors::executors::droid::Droid::decl(),
         executors::executors::droid::Autonomy::decl(),
         executors::executors::droid::ReasoningEffortLevel::decl(),
+        executors::executors::jbai::Jbai::decl(),
+        executors::executors::jbai::JbaiClient::decl(),
         executors::executors::AppendPrompt::decl(),
         executors::actions::coding_agent_initial::CodingAgentInitialRequest::decl(),
         executors::actions::coding_agent_follow_up::CodingAgentFollowUpRequest::decl(),
@@ -300,6 +304,10 @@ fn generate_schemas() -> Result<HashMap<&'static str, String>, serde_json::Error
         (
             "droid",
             generate_json_schema::<executors::executors::droid::Droid>()?,
+        ),
+        (
+            "jbai",
+            generate_json_schema::<executors::executors::jbai::Jbai>()?,
         ),
     ]);
     println!(

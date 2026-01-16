@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    path::{Path as StdPath, PathBuf},
+};
 
 use axum::{
     Json, Router,
@@ -24,8 +27,14 @@ use services::services::config::{
     save_config_to_file,
 };
 use tokio::fs;
+use tokio::process::Command;
 use ts_rs::TS;
-use utils::{api::oauth::LoginStatus, assets::config_path, response::ApiResponse};
+use utils::{
+    api::oauth::LoginStatus,
+    assets::config_path,
+    response::ApiResponse,
+    shell::resolve_executable_path,
+};
 
 use crate::{DeploymentImpl, error::ApiError};
 
@@ -33,6 +42,7 @@ pub fn router() -> Router<DeploymentImpl> {
     Router::new()
         .route("/info", get(get_user_system_info))
         .route("/config", put(update_config))
+        .route("/jbai/models", get(get_jbai_models))
         .route("/sounds/{sound}", get(get_sound))
         .route("/mcp-config", get(get_mcp_servers).post(update_mcp_servers))
         .route("/profiles", get(get_profiles).put(update_profiles))
@@ -79,6 +89,20 @@ pub struct UserSystemInfo {
     pub environment: Environment,
     /// Capabilities supported per executor (e.g., { "CLAUDE_CODE": ["SESSION_FORK"] })
     pub capabilities: HashMap<String, Vec<BaseAgentCapability>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+pub struct JbaiClientModels {
+    pub available: Vec<String>,
+    pub default: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+pub struct JbaiModelsResponse {
+    pub claude: JbaiClientModels,
+    pub codex: JbaiClientModels,
+    pub gemini: JbaiClientModels,
+    pub opencode: JbaiClientModels,
 }
 
 // TODO: update frontend, BE schema has changed, this replaces GET /config and /config/constants
@@ -377,6 +401,88 @@ fn set_mcp_servers_in_config_path(
         .insert(final_attr.to_string(), serde_json::to_value(servers)?);
 
     Ok(())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct JbaiCliModelSet {
+    pub default: String,
+    pub available: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct JbaiCliModels {
+    pub claude: JbaiCliModelSet,
+    pub openai: JbaiCliModelSet,
+    pub gemini: JbaiCliModelSet,
+}
+
+async fn resolve_jbai_cli_root() -> Option<PathBuf> {
+    if let Ok(root) = std::env::var("JBAI_CLI_ROOT") {
+        let path = PathBuf::from(root);
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    let jbai = resolve_executable_path("jbai").await?;
+    let canonical = tokio::fs::canonicalize(jbai).await.ok()?;
+    let bin_dir = canonical.parent()?;
+    bin_dir.parent().map(StdPath::to_path_buf)
+}
+
+async fn load_jbai_cli_models() -> Result<JbaiCliModels, String> {
+    let root = resolve_jbai_cli_root()
+        .await
+        .ok_or_else(|| "jbai-cli not found on PATH".to_string())?;
+    let config_path = root.join("lib").join("config.js");
+    if !config_path.exists() {
+        return Err("jbai-cli config not found".to_string());
+    }
+
+    let script = format!(
+        "const config = require({:?}); console.log(JSON.stringify(config.MODELS));",
+        config_path
+    );
+    let output = Command::new("node")
+        .arg("-e")
+        .arg(script)
+        .output()
+        .await
+        .map_err(|err| format!("Failed to run jbai-cli: {err}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("jbai-cli error: {stderr}"));
+    }
+
+    serde_json::from_slice::<JbaiCliModels>(&output.stdout)
+        .map_err(|err| format!("Invalid jbai-cli model output: {err}"))
+}
+
+async fn get_jbai_models(
+    State(_deployment): State<DeploymentImpl>,
+) -> ResponseJson<ApiResponse<JbaiModelsResponse>> {
+    match load_jbai_cli_models().await {
+        Ok(models) => ResponseJson(ApiResponse::success(JbaiModelsResponse {
+            claude: JbaiClientModels {
+                available: models.claude.available,
+                default: Some(models.claude.default),
+            },
+            codex: JbaiClientModels {
+                available: models.openai.available.clone(),
+                default: Some(models.openai.default.clone()),
+            },
+            gemini: JbaiClientModels {
+                available: models.gemini.available,
+                default: Some(models.gemini.default),
+            },
+            opencode: JbaiClientModels {
+                available: models.openai.available,
+                default: Some(models.openai.default),
+            },
+        })),
+        Err(message) => ResponseJson(ApiResponse::error(&message)),
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

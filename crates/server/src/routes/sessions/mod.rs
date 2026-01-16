@@ -205,6 +205,7 @@ pub async fn follow_up(
             executors::actions::coding_agent_initial::CodingAgentInitialRequest {
                 prompt,
                 executor_profile_id: executor_profile_id.clone(),
+                model_override: None,
                 working_dir,
             },
         )

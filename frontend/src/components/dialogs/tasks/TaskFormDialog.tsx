@@ -4,6 +4,7 @@ import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
 import { useDropzone } from 'react-dropzone';
 import { useForm, useStore } from '@tanstack/react-form';
+import { useQuery } from '@tanstack/react-query';
 import { Image as ImageIcon } from 'lucide-react';
 import {
   Dialog,
@@ -30,6 +31,7 @@ import BranchSelector from '@/components/tasks/BranchSelector';
 import RepoBranchSelector from '@/components/tasks/RepoBranchSelector';
 import { ExecutorProfileSelector } from '@/components/settings';
 import { useUserSystem } from '@/components/ConfigProvider';
+import { configApi } from '@/lib/api';
 import {
   useTaskImages,
   useImageUpload,
@@ -45,11 +47,9 @@ import {
 } from '@/keyboard';
 import { useHotkeysContext } from 'react-hotkeys-hook';
 import { cn } from '@/lib/utils';
-import type {
-  TaskStatus,
-  ExecutorProfileId,
-  ImageResponse,
-} from 'shared/types';
+import { getJbaiModelOptions } from '@/utils/jbai-models';
+import { BaseCodingAgent } from 'shared/types';
+import type { TaskStatus, ExecutorProfileId, ImageResponse } from 'shared/types';
 
 interface Task {
   id: string;
@@ -79,6 +79,7 @@ type TaskFormValues = {
   description: string;
   status: TaskStatus;
   executorProfileId: ExecutorProfileId | null;
+  jbaiModelOverride: string | null;
   repoBranches: RepoBranch[];
   autoStart: boolean;
 };
@@ -134,6 +135,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
           description: props.task.description || '',
           status: props.task.status,
           executorProfileId: baseProfile,
+          jbaiModelOverride: null,
           repoBranches: defaultRepoBranches,
           autoStart: false,
         };
@@ -144,6 +146,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
           description: props.initialTask.description || '',
           status: 'todo',
           executorProfileId: baseProfile,
+          jbaiModelOverride: null,
           repoBranches: defaultRepoBranches,
           autoStart: true,
         };
@@ -156,6 +159,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
           description: '',
           status: 'todo',
           executorProfileId: baseProfile,
+          jbaiModelOverride: null,
           repoBranches: defaultRepoBranches,
           autoStart: true,
         };
@@ -197,11 +201,16 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
           repo_id: rb.repoId,
           target_branch: rb.branch,
         }));
+        const modelOverride =
+          value.executorProfileId?.executor === BaseCodingAgent.JBAI
+            ? value.jbaiModelOverride?.trim() || null
+            : null;
         await createAndStart.mutateAsync(
           {
             task,
             executor_profile_id: value.executorProfileId!,
             repos,
+            model_override: modelOverride,
           },
           { onSuccess: () => modal.remove() }
         );
@@ -239,6 +248,66 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
   const isSubmitting = useStore(form.store, (state) => state.isSubmitting);
   const isDirty = useStore(form.store, (state) => state.isDirty);
   const canSubmit = useStore(form.store, (state) => state.canSubmit);
+  const selectedExecutorProfile = useStore(
+    form.store,
+    (state) => state.values.executorProfileId
+  );
+  const selectedJbaiModel = useStore(
+    form.store,
+    (state) => state.values.jbaiModelOverride
+  );
+  const isJbaiSelected =
+    selectedExecutorProfile?.executor === BaseCodingAgent.JBAI;
+
+  const jbaiClient = useMemo(() => {
+    if (!isJbaiSelected || !profiles || !selectedExecutorProfile) {
+      return 'CLAUDE';
+    }
+    const variant = selectedExecutorProfile.variant ?? 'DEFAULT';
+    const executorConfigs = profiles[selectedExecutorProfile.executor];
+    const variantConfig =
+      executorConfigs?.[variant] as Record<string, unknown> | undefined;
+    const jbaiConfig = variantConfig?.JBAI as { client?: string } | undefined;
+    return jbaiConfig?.client ?? 'CLAUDE';
+  }, [isJbaiSelected, profiles, selectedExecutorProfile]);
+
+  const { data: jbaiModels } = useQuery({
+    queryKey: ['jbai-models'],
+    queryFn: configApi.getJbaiModels,
+    staleTime: 5 * 60 * 1000,
+    enabled: modal.visible && isJbaiSelected,
+  });
+
+  const jbaiModelOptions = useMemo(() => {
+    if (!isJbaiSelected) {
+      return [];
+    }
+    const dynamicOptions: Record<string, string[]> | null = jbaiModels
+      ? {
+          CLAUDE: jbaiModels.claude.available,
+          CODEX: jbaiModels.codex.available,
+          GEMINI: jbaiModels.gemini.available,
+          OPENCODE: jbaiModels.opencode.available,
+        }
+      : null;
+    return dynamicOptions?.[jbaiClient] ?? getJbaiModelOptions(jbaiClient);
+  }, [isJbaiSelected, jbaiClient, jbaiModels]);
+
+  useEffect(() => {
+    if (!isJbaiSelected) {
+      if (selectedJbaiModel) {
+        form.setFieldValue('jbaiModelOverride', null);
+      }
+      return;
+    }
+    if (
+      selectedJbaiModel &&
+      jbaiModelOptions.length > 0 &&
+      !jbaiModelOptions.includes(selectedJbaiModel)
+    ) {
+      form.setFieldValue('jbaiModelOverride', null);
+    }
+  }, [isJbaiSelected, selectedJbaiModel, jbaiModelOptions, form]);
 
   // Load images for edit mode
   useEffect(() => {
@@ -566,6 +635,49 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
                         </form.Field>
                       )}
                     </div>
+                    {isJbaiSelected && (
+                      <form.Field name="jbaiModelOverride">
+                        {(field) => (
+                          <div className="space-y-2">
+                            <Label htmlFor="jbai-model">
+                              {t('taskFormDialog.jbaiModel.label')}
+                            </Label>
+                            <Select
+                              value={field.state.value ?? '__default__'}
+                              onValueChange={(value) =>
+                                field.handleChange(
+                                  value === '__default__' ? null : value
+                                )
+                              }
+                              disabled={
+                                isSubmitting || !autoStartField.state.value
+                              }
+                            >
+                              <SelectTrigger id="jbai-model">
+                                <SelectValue
+                                  placeholder={t(
+                                    'taskFormDialog.jbaiModel.placeholder'
+                                  )}
+                                />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__default__">
+                                  {t('taskFormDialog.jbaiModel.defaultOption')}
+                                </SelectItem>
+                                {jbaiModelOptions.map((model) => (
+                                  <SelectItem key={model} value={model}>
+                                    {model}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                              {t('taskFormDialog.jbaiModel.helper')}
+                            </p>
+                          </div>
+                        )}
+                      </form.Field>
+                    )}
                     {!isSingleRepo && (
                       <form.Field name="repoBranches">
                         {(field) => {

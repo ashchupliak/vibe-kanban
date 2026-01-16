@@ -849,6 +849,7 @@ impl LocalContainerService {
             ExecutorActionType::CodingAgentInitialRequest(CodingAgentInitialRequest {
                 prompt: queued_data.message.clone(),
                 executor_profile_id: executor_profile_id.clone(),
+                model_override: None,
                 working_dir,
             })
         };
@@ -1067,7 +1068,8 @@ impl ContainerService for LocalContainerService {
                     | BaseCodingAgent::ClaudeCode
                     | BaseCodingAgent::Gemini
                     | BaseCodingAgent::QwenCode
-                    | BaseCodingAgent::Opencode,
+                    | BaseCodingAgent::Opencode
+                    | BaseCodingAgent::Jbai,
                 ) => ExecutorApprovalBridge::new(
                     self.approvals.clone(),
                     self.db.clone(),
@@ -1097,6 +1099,15 @@ impl ContainerService for LocalContainerService {
         env.insert("VK_TASK_ID", task.id.to_string());
         env.insert("VK_WORKSPACE_ID", workspace.id.to_string());
         env.insert("VK_WORKSPACE_BRANCH", &workspace.branch);
+        if matches!(executor_action.base_executor(), Some(BaseCodingAgent::Jbai)) {
+            let token = self.config.read().await.jbai_token.clone();
+            if let Some(value) = token {
+                let trimmed = value.trim();
+                if !trimmed.is_empty() {
+                    env.insert("JBAI_TOKEN", trimmed);
+                }
+            }
+        }
 
         // Create the child and stream, add to execution tracker with timeout
         let mut spawned = tokio::time::timeout(

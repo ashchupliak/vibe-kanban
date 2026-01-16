@@ -173,6 +173,7 @@ async fn trigger_pr_description_follow_up(
         ExecutorActionType::CodingAgentInitialRequest(CodingAgentInitialRequest {
             prompt,
             executor_profile_id: executor_profile_id.clone(),
+            model_override: None,
             working_dir,
         })
     };

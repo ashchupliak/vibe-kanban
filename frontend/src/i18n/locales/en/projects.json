@@ -2,6 +2,32 @@
   "title": "Projects",
   "subtitle": "Manage your projects and track their progress",
   "createProject": "Create Project",
+  "createDialog": {
+    "title": "Create Project",
+    "description": "Choose how you want to set up your project.",
+    "creatingTitle": "Creating Project",
+    "creatingDescription": "Setting up your project...",
+    "defaultName": "New Project",
+    "options": {
+      "singleRepo": "Single repository",
+      "singleRepoDescription": "Create a project from one git repository.",
+      "folder": "Folder with repositories",
+      "folderDescription": "Scan a folder and include all git repositories inside."
+    },
+    "repoPicker": {
+      "title": "Create Project",
+      "description": "Select or create a repository for your project"
+    },
+    "folderPicker": {
+      "title": "Select Folder",
+      "description": "Choose a folder that contains git repositories"
+    },
+    "errors": {
+      "createFailed": "Failed to create project.",
+      "noRepos": "No git repositories found in that folder.",
+      "scanFailed": "Failed to scan the folder for repositories."
+    }
+  },
   "linkToOrganization": "Link to Remote Project",
   "loading": "Loading projects...",
   "repoSearch": {
